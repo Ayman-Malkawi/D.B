@@ -1,0 +1,85 @@
+CREATE TABLE Users (
+    UserID INT PRIMARY KEY IDENTITY(1,1),
+    FullName NVARCHAR(100) NOT NULL,
+    Email NVARCHAR(100) UNIQUE NOT NULL,
+    PasswordHash NVARCHAR(255) NOT NULL,
+    PhoneNumber NVARCHAR(15),
+    Address NVARCHAR(255),
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+
+-- جدول الأدمن
+CREATE TABLE Admins (
+    AdminID INT PRIMARY KEY IDENTITY(1,1),
+    Username NVARCHAR(50) UNIQUE NOT NULL,
+    Email NVARCHAR(100) UNIQUE NOT NULL,
+    PasswordHash NVARCHAR(255) NOT NULL,
+    Role NVARCHAR(20) CHECK (Role IN ('SuperAdmin', 'Moderator')) DEFAULT 'Moderator'
+);
+
+-- جدول المنتجات
+CREATE TABLE Products (
+    ProductID INT PRIMARY KEY IDENTITY(1,1),
+    Name NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(MAX),
+    Price DECIMAL(10,2) NOT NULL,
+    Stock INT NOT NULL,
+    Category NVARCHAR(50),
+    ImageURL NVARCHAR(255),
+    CreatedAt DATETIME DEFAULT GETDATE()
+);
+
+-- جدول الطلبات
+CREATE TABLE Orders (
+    OrderID INT PRIMARY KEY IDENTITY(1,1),
+    UserID INT NOT NULL,
+    TotalAmount DECIMAL(10,2) NOT NULL,
+    OrderStatus NVARCHAR(20) CHECK (OrderStatus IN ('Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled')) DEFAULT 'Pending',
+    OrderDate DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+);
+
+-- جدول تفاصيل الطلبات
+CREATE TABLE OrderDetails (
+    OrderDetailID INT PRIMARY KEY IDENTITY(1,1),
+    OrderID INT NOT NULL,
+    ProductID INT NOT NULL,
+    Quantity INT NOT NULL,
+    Price DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID),
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID)
+);
+
+-- جدول المدفوعات
+CREATE TABLE Transactions (
+    TransactionID INT PRIMARY KEY IDENTITY(1,1),
+    OrderID INT NOT NULL,
+    PaymentMethod NVARCHAR(20) CHECK (PaymentMethod IN ('Cash on Delivery', 'Credit Card', 'PayPal')) NOT NULL,
+    PaymentStatus NVARCHAR(20) CHECK (PaymentStatus IN ('Pending', 'Completed', 'Failed')) DEFAULT 'Pending',
+    TransactionDate DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID)
+);
+
+-- جدول الإشعارات
+CREATE TABLE Notifications (
+    NotificationID INT PRIMARY KEY IDENTITY(1,1),
+    UserID INT NOT NULL,
+    Message NVARCHAR(MAX) NOT NULL,
+    Status NVARCHAR(10) CHECK (Status IN ('Unread', 'Read')) DEFAULT 'Unread',
+    CreatedAt DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (UserID) REFERENCES Users(UserID)
+);
+
+-- جدول إعادة تعيين كلمة المرور
+CREATE TABLE PasswordResets (
+    ResetID INT PRIMARY KEY IDENTITY(1,1),
+    Email NVARCHAR(100) NOT NULL,
+    Token NVARCHAR(255) NOT NULL,
+    ExpiryDate DATETIME DEFAULT DATEADD(HOUR, 1, GETDATE())
+);
+
+-- إدراج بيانات تجريبية
+INSERT INTO Admins (Username, Email, PasswordHash, Role) VALUES ('admin', 'admin@example.com', 'hashed_password', 'SuperAdmin');
+INSERT INTO Products (Name, Description, Price, Stock, Category, ImageURL) VALUES 
+('Coffee Maker', 'High-quality coffee maker', 120.99, 10, 'Machines', 'image1.jpg'),
+('Espresso Machine', 'Professional espresso machine', 299.99, 5, 'Machines', 'image2.jpg');
